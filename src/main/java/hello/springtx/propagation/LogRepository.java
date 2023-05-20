@@ -11,11 +11,12 @@ import java.util.Optional;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
+@Transactional
 public class LogRepository {
 
     private final EntityManager em;
 
-    @Transactional
+    //@Transactional
     public void save(Log logMessage) {
         log.info("log 저장");
         em.persist(logMessage);
