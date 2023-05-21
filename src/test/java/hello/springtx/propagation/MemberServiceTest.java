@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.rmi.UnexpectedException;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,5 +77,61 @@ class MemberServiceTest {
         assertTrue(memberRepository.find(username).isPresent());
         assertTrue(logRepository.find(username).isPresent());
     }
+
+    /**
+     * memberService @Transactional : on
+     * memberRepository @Transactional : on
+     * logRepository @Transactional : on Exception
+     */
+
+    @Test
+    void outerTxOn_fail(){
+        String username = "로그예외_outerTxOff_fail";
+
+        assertThatThrownBy(()->memberService.joinV1(username))
+                .isInstanceOf(RuntimeException.class);
+
+        // 모든 데이터 롤백
+        assertTrue(memberRepository.find(username).isEmpty());
+        assertTrue(logRepository.find(username).isEmpty());
+    }
+
+
+    /**
+     * memberService @Transactional : on
+     * memberRepository @Transactional : on
+     * logRepository @Transactional : on Exception
+     */
+
+    @Test
+    void recoverException_fail(){
+        String username = "로그예외_recoverException_fail";
+
+        assertThatThrownBy(()->memberService.joinV2(username))
+                .isInstanceOf(UnexpectedRollbackException.class);
+
+        // 모든 데이터 롤백
+        assertTrue(memberRepository.find(username).isEmpty());
+        assertTrue(logRepository.find(username).isEmpty());
+    }
+
+
+    /**
+     * memberService @Transactional : on
+     * memberRepository @Transactional : on
+     * logRepository @Transactional : on(REQUIRES_NEW) Exception
+     */
+
+    @Test
+    void recoverException_success(){
+        String username = "로그예외_recoverException_success";
+
+        memberService.joinV2(username);
+
+        // 모든 데이터 롤백
+        assertTrue(memberRepository.find(username).isPresent());
+        assertTrue(logRepository.find(username).isEmpty());
+    }
+
 
 }
